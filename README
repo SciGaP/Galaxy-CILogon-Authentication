@@ -1,0 +1,47 @@
+CILogon authentication for Galaxy Guide:
+
+Requirement: PHP installed as an Apache module (yum install php)
+
+1. Install Galaxy locally and update configurations in universe_wsgi.ini:
+    a.> Serving Galaxy at /galaxy sub directory, in [app:main] section:
+	   1 [filter:proxy-prefix]
+   	   2 use = egg:PasteDeploy#prefix
+   	   3 prefix = /galaxy
+   	   4 
+   	   5 [app:main]
+   	   6  
+  	   7 filter-with = proxy-prefix
+   	   8 cookie_path = /galaxy
+    b.> Enable external user authentication:
+	   use_remote_user = True
+        Leave remote_user_maildomain settings untouched 
+	   #remote_user_maildomain = None
+    c.> (Optional) add remote user logout URL:
+	   remote_user_logout_href = http://<hostname>/logout_galaxy.php
+    (e.g. remote_user_logout_href = http://gw64.iu.xsede.org/logout_galaxy.php)
+
+2. Register the gateway at https://cilogon.org/oauth/register. 
+The page contains the link to the registration document (https://docs.google.com/document/d/1LxiGc0NJmZz_yYyj1r2xfV6Cw4EtW_5cEDl230xZ5io/edit?hl=en_US).
+Save the generated PKCS #8 private key file: oauth-privkey.pk8
+The registration also returns a "Generated identifier" that looks like 
+myproxy:oa4mp,2012:/client/353e14dc80d6010aafe67121f48224d
+
+3. Put the included PHP files (index.php, login_galaxy.php, logout_galaxy.php, register_galaxy.php), configuration files (properties.ini, authorized_users), as well as the private key file oauth-privkey.pk8 under Apache document root directory (/var/www/html/), make sure the key file and configuration files are owned by apache and has the permission of 0600. 
+
+4. Update all fields in properties.ini file properly. Set up the authorized_users file as needed. 
+
+5. Modify Apache configuration to enable Galaxy proxy forwarding and CILogon authentication by adding following to Apache ssl configuration as https is used (/etc/httpd/conf.d/ssl.conf):
+
+	<Proxy http://localhost:8080>
+    		Order deny,allow
+    		Allow from all
+	</Proxy>
+
+	RewriteEngine On
+
+	RewriteCond %{HTTP_COOKIE} GalaxyUser=([^;]+)
+	RewriteRule . - [E=RU:%1]
+	RequestHeader set REMOTE_USER %{RU}e
+	RequestHeader set X-URL-SCHEME https
+
+	RewriteRule ^/galaxy(.*) http://localhost:8080$1 [P]
