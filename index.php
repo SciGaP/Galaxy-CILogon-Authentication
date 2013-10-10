@@ -67,7 +67,7 @@ try {
   $user = substr($email, 6);
   //$_SESSION['state']=3;
   //if authorized user, forward to login, otherwise to register
-  if(strpos(file_get_contents($authzfile),$user) == false) {
+  if(strpos(file_get_contents($authzfile),$user) === false) {
     header('Location: /register_galaxy.php');
   } else {
     $_SESSION['GalaxyUser']=$user;
