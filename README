@@ -54,3 +54,18 @@ myproxy:oa4mp,2012:/client/353e14dc80d6010aafe67121f48224d
 	RequestHeader set X-URL-SCHEME https
 
 	RewriteRule ^/galaxy(.*) http://localhost:8080$1 [P]
+
+6. Enable proxy stickyness when Apache load balancer is configured. For example:
+	RewriteEngine On
+	RewriteCond %{HTTP_COOKIE} GalaxyUser=([^;]+)
+	RewriteRule . - [E=RU:%1]
+	RequestHeader set REMOTE_USER %{RU}e
+	RequestHeader set X-URL-SCHEME https
+
+	<Proxy balancer://mycluster>
+   		BalancerMember http://localhost:18456
+   		BalancerMember http://localhost:18457
+   		BalancerMember http://localhost:18458
+   		ProxySet stickysession=GalaxyUser
+	</Proxy>
+	RewriteRule ^/galaxy(.*) balancer://mycluster$1 [P]
