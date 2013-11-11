@@ -3,11 +3,12 @@ CILogon authentication for Galaxy Guide:
 Requirement: PHP installed as an Apache module (yum install php)
 
 0. Install PHP Oauth module: http://php.net/manual/en/oauth.setup.php
-	yum install pcre pcre-devel
+	yum install php-devel php-pear pcre pcre-devel
 	pecl install oauth
 
 	Add following to /etc/php.ini:
 	extension=oauth.so
+	extension=http.so
 
 	server httpd restart
 
